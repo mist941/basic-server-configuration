@@ -1,0 +1,56 @@
+---
+- name: Install logging packages
+  apt:
+    name:
+      - rsyslog
+      - logrotate
+    state: present
+    update_cache: yes
+  tags: ['logging', 'packages']
+
+- name: Ensure rsyslog is configured
+  template:
+    src: rsyslog.conf.j2
+    dest: /etc/rsyslog.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart rsyslog
+  ignore_errors: yes  # Continue if template is missing
+  tags: ['logging', 'rsyslog']
+
+- name: Configure logrotate for system logs
+  copy:
+    src: logrotate.conf
+    dest: /etc/logrotate.d/custom-logs
+    owner: root
+    group: root
+    mode: '0644'
+  ignore_errors: yes  # Continue if file is missing
+  tags: ['logging', 'logrotate']
+
+- name: Ensure rsyslog service is enabled and running
+  service:
+    name: rsyslog
+    state: started
+    enabled: yes
+  tags: ['logging', 'rsyslog']
+
+- name: Create log directory for application logs
+  file:
+    path: /var/log/apps
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: ['logging', 'log_directory']
+
+- name: Set up log monitoring (basic)
+  cron:
+    name: "Check for large log files"
+    job: "find /var/log -type f -size +100M | mail -s 'Large log files found' root"
+    hour: "0"
+    minute: "0"
+    user: root
+  when: ansible_os_family == "Debian"
+  tags: ['logging', 'log_monitoring']

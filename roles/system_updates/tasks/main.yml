@@ -1,0 +1,11 @@
+---
+# System updates
+# Update the apt package cache to get the latest package information
+- name: Update apt
+  apt:
+    update_cache: true  # Equivalent to 'apt-get update'
+
+# Upgrade all installed packages to their latest versions
+- name: Upgrade all packages
+  apt:
+    upgrade: dist  # Equivalent to 'apt-get dist-upgrade'

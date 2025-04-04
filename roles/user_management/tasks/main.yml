@@ -1,0 +1,37 @@
+---
+# User and SSH setup
+# Generate password hash
+- name: Generate password hash
+  set_fact:
+    hashed_password: "{{ NEW_USER_PASSWORD | password_hash('sha512') }}"
+
+# Create or update user with sudo privileges
+- name: Add user
+  user:
+    name: "{{ NEW_USER_NAME }}"
+    state: present
+    groups: sudo               # Adds user to sudo group
+    append: true              # Appends to existing groups instead of replacing
+    password: "{{ hashed_password }}"
+
+# Configure sudo privileges for new user
+- name: Configure sudo privileges for new user
+  copy:
+    dest: /etc/sudoers.d/{{ NEW_USER_NAME }}
+    content: "{{ NEW_USER_NAME }} ALL=(ALL) ALL"
+    mode: '0440'
+    validate: /usr/sbin/visudo -cf %s
+
+# Create .ssh directory with secure permissions
+- name: Create .ssh directory
+  file:
+    path: "/home/{{ NEW_USER_NAME }}/.ssh"
+    state: directory
+    mode: '0700'  # Sets permissions to 700 (rwx------)
+
+# Add the SSH public key to authorized_keys file
+- name: Add SSH key to authorized_keys
+  authorized_key:
+    user: "{{ NEW_USER_NAME }}"
+    key: "{{ lookup('file', SSH_KEY_PATH) }}"  # Reads the public key from file
+    state: present

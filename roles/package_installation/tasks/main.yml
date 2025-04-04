@@ -1,0 +1,12 @@
+---
+# Basic package installation
+# Install essential system utilities
+- name: Install packages
+  apt:
+    name:
+      - vim    # Text editor
+      - curl   # HTTP client
+      - htop   # Process viewer
+      - git    # Version control
+      - mtr    # Network diagnostic tool
+    state: present

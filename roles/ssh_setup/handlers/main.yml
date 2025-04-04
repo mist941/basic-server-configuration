@@ -1,0 +1,6 @@
+---
+# Handler to restart SSH service when configuration changes
+- name: restart ssh
+  service:
+    name: ssh
+    state: restarted

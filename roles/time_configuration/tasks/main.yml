@@ -1,0 +1,19 @@
+---
+# Time configuration
+# Set the system timezone
+- name: Set timezone to whatever set in the .env file
+  timezone:
+    name: "{{ TIMEZONE }}"  # Sets timezone using timedatectl
+
+# Install chrony package for NTP time synchronization
+- name: Install chrony for time synchronization
+  apt:
+    name: chrony
+    state: present  # Ensures the package is installed
+
+# Start and enable chrony service to run on boot
+- name: Enable and start chrony service
+  service:
+    name: chrony
+    state: started  # Starts the service
+    enabled: yes    # Enables service to start on boot

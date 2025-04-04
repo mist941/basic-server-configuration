@@ -1,0 +1,51 @@
+---
+# Automatic updates configuration
+# Install unattended-upgrades package
+- name: Install unattended-upgrades
+  apt:
+    name: unattended-upgrades
+    state: present
+  tags: ['updates', 'automatic']
+
+# Enable automatic updates through debconf
+- name: Enable unattended-upgrades
+  debconf:
+    name: unattended-upgrades
+    question: unattended-upgrades/enable_auto_updates
+    value: "true"
+    vtype: boolean
+  tags: ['updates', 'automatic']
+
+# Configure unattended-upgrades behavior
+- name: Configure unattended-upgrades
+  blockinfile:
+    path: /etc/apt/apt.conf.d/50unattended-upgrades
+    create: yes
+    block: |
+      Unattended-Upgrade::Allowed-Origins {
+          "${distro_id}:${distro_codename}";
+          "${distro_id}:${distro_codename}-security";
+          "${distro_id}ESMApps:${distro_codename}-apps-security";
+          "${distro_id}ESM:${distro_codename}-infra-security";
+      };
+      Unattended-Upgrade::AutoFixInterruptedDpkg "true";  # Fix interrupted upgrades
+      Unattended-Upgrade::MinimalSteps "true";            # Use minimal steps
+      Unattended-Upgrade::InstallOnShutdown "false";      # Don't install on shutdown
+      Unattended-Upgrade::Remove-Unused-Dependencies "true";  # Clean up
+      Unattended-Upgrade::Automatic-Reboot "false";       # Don't reboot automatically
+  tags: ['updates', 'automatic']
+
+# Configure automatic update schedule
+- name: Configure automatic updates
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    src: 20auto-upgrades
+  tags: ['updates', 'automatic']
+
+# Start and enable unattended-upgrades service
+- name: Start and enable unattended-upgrades service
+  service:
+    name: unattended-upgrades
+    state: started
+    enabled: yes
+  tags: ['updates', 'automatic']
