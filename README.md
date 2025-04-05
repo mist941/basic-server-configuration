@@ -30,7 +30,7 @@ An Ansible playbook for automating secure server setup and configuration with se
    cd basic-server-configuration
    ```
 
-2. Configure environment variables in the `.env` file, you can follow the sample file provided and fill in your data
+2. Configure environment variables in a `.env` file, you can follow the sample file provided in `.env.template` and fill in your data
 
 3. Update the `inventory.ini` file with your server IP addresses:
    ```ini
