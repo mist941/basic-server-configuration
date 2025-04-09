@@ -1,21 +1,28 @@
-- name: Basic server setup
+- name: "[Server setup] : Initial Debian based server setup"
   hosts: servers
-  become: yes
+  become: True
   tasks:
-    # System updates
-    - name: Update apt
+    # Update and upgrade system packages
+    - name: "Update apt caches"
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: yes
+        cache_valid_time: 3600
+    
+    # Install Ubuntu specific package for TZ change 
+    # https://docs.ansible.com/ansible/latest/collections/community/general/timezone_module.html
+    - name: "Install util-linux-extras to access hwclock"
       apt:
-        update_cache: true
+        name: util-linux-extra
+        state: present
+      when: ansible_distribution == "Ubuntu"
 
-    - name: Upgrade all packages
-      apt:
-        upgrade: dist
-
-    # Time configuration
-    - name: Set timezone to whatever set in the .env file
-      timezone:
+    # TimeZone configuration
+    - name: "Set TimeZone using the community.general timezone module"
+      become: true
+      community.general.timezone:
         name: "{{ TIMEZONE }}"
-        
+
     - name: Install chrony for time synchronization
       apt:
         name: chrony
@@ -32,7 +39,7 @@
       file:
         path: "/{{ ANSIBLE_USER }}/.ssh"
         state: directory
-        mode: '0700'
+        mode: "0700"
 
     - name: Add SSH key to root user's authorized_keys
       authorized_key:
@@ -57,14 +64,14 @@
       copy:
         dest: /etc/sudoers.d/{{ NEW_USER_NAME }}
         content: "{{ NEW_USER_NAME }} ALL=(ALL) ALL"
-        mode: '0440'
+        mode: "0440"
         validate: /usr/sbin/visudo -cf %s
 
     - name: Create .ssh directory
       file:
         path: "/home/{{ NEW_USER_NAME }}/.ssh"
         state: directory
-        mode: '0700'  # (rwx------)
+        mode: "0700" # (rwx------)
 
     - name: Add SSH key to authorized_keys
       authorized_key:
@@ -80,29 +87,41 @@
         line: "{{ item.line }}"
         state: present
       loop:
-        - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin prohibit-password' } 
-        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
-        - { regexp: '^#?ChallengeResponseAuthentication', line: 'ChallengeResponseAuthentication no' }
-        - { regexp: '^#?UsePAM', line: 'UsePAM no' }
-        - { regexp: '^#?PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
+        - {
+            regexp: "^#?PermitRootLogin",
+            line: "PermitRootLogin prohibit-password",
+          }
+        - {
+            regexp: "^#?PasswordAuthentication",
+            line: "PasswordAuthentication no",
+          }
+        - {
+            regexp: "^#?ChallengeResponseAuthentication",
+            line: "ChallengeResponseAuthentication no",
+          }
+        - { regexp: "^#?UsePAM", line: "UsePAM no" }
+        - {
+            regexp: "^#?PubkeyAuthentication",
+            line: "PubkeyAuthentication yes",
+          }
       notify: restart ssh
 
     - name: Create custom SSH config
       copy:
         src: ./config/ssh/99-custom.conf
         dest: /etc/ssh/sshd_config.d/99-custom.conf
-        mode: '0644'
+        mode: "0644"
       notify: restart ssh
-      
+
     # Basic package installation
     - name: Install packages
       apt:
         name:
-          - vim    # Text editor
-          - curl   # HTTP client
-          - htop   # Process viewer
-          - git    # Version control
-          - mtr    # Network diagnostic tool
+          - vim # Text editor
+          - curl # HTTP client
+          - htop # Process viewer
+          - git # Version control
+          - mtr # Network diagnostic tool
         state: present
 
     # Security setup

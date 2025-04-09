@@ -1,0 +1,12 @@
+ANSIBLE_USER = ENV["ANSIBLE_USER"] || "vagrant"
+ANSIBLE_PASSWORD = ENV["ANSIBLE_PASSWORD"] || "vagrant"
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/trusty64"
+  config.ssh.username = ANSIBLE_USER
+  config.ssh.password = ANSIBLE_PASSWORD
+  config.ssh.forward_agent = true
+
+  config.vm.network "private_network", type: "dhcp"
+
+end
